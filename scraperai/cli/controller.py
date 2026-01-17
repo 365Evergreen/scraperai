@@ -15,6 +15,7 @@ from scraperai.exceptions import NotFoundError
 from scraperai.models import CatalogItem, WebpageFields, ScraperConfig, WebpageType, Pagination
 from scraperai import ParserAI
 from scraperai.crawlers import SeleniumCrawler
+import os
 from scraperai.scraper import Scraper
 
 
@@ -51,9 +52,17 @@ class Controller:
         return configs
 
     def init_crawler(self):
-        click.echo('Starting webdriver...')
-        self.crawler = SeleniumCrawler()
-        click.echo(f'Webdriver is ok')
+        # Allow using a lightweight requests-based crawler in environments without a browser.
+        # Set `USE_REQUESTS_CRAWLER=1` in the environment to avoid starting a Selenium webdriver.
+        use_requests = os.getenv('USE_REQUESTS_CRAWLER') in ('1', 'true', 'True')
+        if use_requests:
+            click.echo('Using RequestsCrawler (no webdriver)')
+            from scraperai.crawlers.requests import RequestsCrawler
+            self.crawler = RequestsCrawler()
+        else:
+            click.echo('Starting webdriver...')
+            self.crawler = SeleniumCrawler()
+            click.echo(f'Webdriver is ok')
 
     def init_scraper(self):
         self.view.show_api_key_screen(status=ScreenStatus.loading)

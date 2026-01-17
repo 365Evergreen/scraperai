@@ -4,3 +4,4 @@ from .pagination_detector import PaginationDetector
 from .webpage_classifier import WebpageVisionClassifier, WebpageTextClassifier
 from .webpage_descriptor import WebpageVisionDescriptor, WebpagePartsDescriptor
 from .parserai import ParserAI
+from scraperai.models import WebpageType

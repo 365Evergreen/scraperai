@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 from selenium import webdriver
 from selenium.webdriver.remote.webelement import WebElement
@@ -30,6 +31,11 @@ class DefaultChromeWebdriver(webdriver.Chrome, BaseWebdriver):
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         # Turn-off userAutomationExtension
         options.add_experimental_option("useAutomationExtension", False)
+
+        # Allow overriding the browser binary (useful to point to Edge).
+        browser_binary = os.getenv('BROWSER_BINARY')
+        if browser_binary:
+            options.binary_location = browser_binary
 
         current_dir = Path(__file__).resolve().parent
         cookies_extension_path = current_dir / 'extensions' / 'cookies.crx'

@@ -27,6 +27,9 @@ class ParserAI:
                  openai_api_key: str = None,
                  openai_organization: str = None):
 
+        import os
+        self._mock = os.getenv('MOCK_LLM') in ('1', 'true', 'True')
+
         if json_lm_model is None:
             self.json_lm_model = JsonOpenAI(openai_api_key, openai_organization, temperature=0)
         else:
@@ -41,6 +44,27 @@ class ParserAI:
             self.code_model = PythonCodeOpenAI(openai_api_key, openai_organization)
         else:
             self.code_model = code_model
+
+        # If MOCK_LLM is enabled, bypass network LLM calls and use deterministic responses
+        if self._mock:
+            from scraperai.models import WebpageFields
+
+            def _mock_detect_page_type(page_source: str | None = None, screenshot: str | None = None):
+                return WebpageType.CATALOG
+
+            def _mock_detect_pagination(page_source: str):
+                return Pagination(type='urls', urls=[self.json_lm_model and getattr(self.json_lm_model, 'latest', '') or ''])
+
+            def _mock_detect_catalog_item(page_source: str, website_url: str, extra_prompt: str = None):
+                return CatalogItem(card_xpath='//div', url_xpath='.//a/@href', html_snippet='<div></div>', urls_on_page=[website_url])
+
+            def _mock_extract_fields(html_snippet: str):
+                return WebpageFields(static_fields=[], dynamic_fields=[])
+
+            self.detect_page_type = _mock_detect_page_type
+            self.detect_pagination = _mock_detect_pagination
+            self.detect_catalog_item = _mock_detect_catalog_item
+            self.extract_fields = _mock_extract_fields
 
     @property
     def total_cost(self) -> float:
